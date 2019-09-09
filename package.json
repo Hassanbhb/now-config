@@ -8,5 +8,8 @@
   "license": "ISC",
   "dependencies": {
     "inquirer": "^7.0.0"
+  },
+  "scripts": {
+    "now-build": "yarn run build"
   }
 }

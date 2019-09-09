@@ -3,7 +3,10 @@ const path = require("path");
 const inquirer = require("inquirer");
 
 const nodeExpress = require("./configs/nodeExpress");
+const staticConfig = require("./configs/staticConfig");
+const fef = require("./configs/fef");
 
+const nowPath = path.join(process.cwd(), "now.json");
 const existingConfig = fs.existsSync("now.json");
 
 async function buildConfig() {
@@ -21,16 +24,8 @@ async function buildConfig() {
     {
       type: "list",
       name: "type",
-      message: "what type of project?",
-      choices: [
-        "node-express",
-        "json",
-        "vue",
-        "react",
-        "static",
-        "static-build",
-        "lambda"
-      ]
+      message: "what type of project?🐱‍👤",
+      choices: ["node-express", "vue", "react", "static", "static-build"]
     }
   ]);
   config.name = answers.name;
@@ -38,8 +33,42 @@ async function buildConfig() {
     case "node-express":
       config = await nodeExpress(config);
       break;
+    case "static":
+      config = await staticConfig(config);
+      break;
+    case "react":
+      config = await fef(config, "build");
+      break;
+    case "vue":
+      config = await fef(config);
+      break;
+    case "static-build":
+      config = await fef(config);
+      break;
+    default:
+      break;
   }
-  console.log(config);
+  const moreAnswers = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "specifyAlias",
+      message: "would you like to specify an alias?",
+      default: true
+    },
+    {
+      type: "text",
+      name: "alias",
+      message: "What is the Alias? (specify multiple seperated by comas)",
+      default: answers.name,
+      when: a => a.specifyAlias
+    }
+  ]);
+  config.alias = moreAnswers.alias
+    ? moreAnswers.alias.split(",").map(a => a.trim())
+    : undefined;
+  fs.writeFileSync(nowPath, JSON.stringify(config, null, 2), "utf8");
+  console.log("All Done! Type now to deploy!");
+  process.exit(0);
 }
 
 if (existingConfig) {
